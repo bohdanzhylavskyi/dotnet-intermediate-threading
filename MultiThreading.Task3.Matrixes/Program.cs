@@ -30,7 +30,7 @@ namespace MultiThreading.Task3.MatrixMultiplier
             var firstMatrix = new Matrix(sizeOfMatrix, sizeOfMatrix);
             var secondMatrix = new Matrix(sizeOfMatrix, sizeOfMatrix);
 
-            IMatrix resultMatrix = new MatricesMultiplier().Multiply(firstMatrix, secondMatrix);
+            IMatrix resultMatrix = new MatricesMultiplierParallel().Multiply(firstMatrix, secondMatrix);
 
             Console.WriteLine("firstMatrix:");
             firstMatrix.Print();

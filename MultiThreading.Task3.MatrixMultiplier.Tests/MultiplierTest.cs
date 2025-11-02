@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MultiThreading.Task3.MatrixMultiplier.Matrices;
 using MultiThreading.Task3.MatrixMultiplier.Multipliers;
@@ -18,11 +20,52 @@ namespace MultiThreading.Task3.MatrixMultiplier.Tests
         [TestMethod]
         public void ParallelEfficiencyTest()
         {
-            // todo: implement a test method to check the size of the matrix which makes parallel multiplication more effective than
-            // todo: the regular one
+            int[] sizes = { 1, 5, 10, 20, 30, 50 };
+
+            double thresholdRatio = 0.9;
+
+            foreach (var size in sizes)
+            {
+                var mA = InitializeMatrix(size, size);
+                var mB = InitializeMatrix(size, size);
+
+                IMatrix seqResult;
+                IMatrix parResult;
+
+                var seqDuration = MeasureMicroseconds(
+                    () => MultiplyMatrices(mA, mB, new MatricesMultiplier(), out seqResult)
+                );
+                
+                var parDuration = MeasureMicroseconds(
+                    () => MultiplyMatrices(mA, mB, new MatricesMultiplierParallel(), out parResult)
+                );
+
+                Console.WriteLine($"Size: {size}, Seq: {seqDuration} microseconds, Par: {parDuration} microseconds");
+
+                if (parDuration < seqDuration * thresholdRatio)
+                {
+                    Console.WriteLine($"Parallel version became faster at size {size}");
+                    return;
+                }
+            }
+
+            Assert.Fail("Parallel version was not faster for any tested size");
         }
 
         #region private methods
+
+        private static double MeasureMicroseconds(Action action)
+        {
+            var sw = Stopwatch.StartNew();
+            action();
+            sw.Stop();
+            return sw.ElapsedTicks * 1_000_000.0 / Stopwatch.Frequency;
+        }
+
+        void MultiplyMatrices(IMatrix a, IMatrix b, IMatricesMultiplier multiplier, out IMatrix result)
+        {
+            result = multiplier.Multiply(a, b);
+        }
 
         void TestMatrix3On3(IMatricesMultiplier matrixMultiplier)
         {
@@ -71,6 +114,21 @@ namespace MultiThreading.Task3.MatrixMultiplier.Tests
             Assert.AreEqual(728, multiplied.GetElement(2, 2));
         }
 
+
+        Matrix InitializeMatrix(int rows, int cols)
+        {
+            var matrix = new Matrix(rows, cols);
+
+            Random r = new Random();
+            for (int i = 0; i < rows; i++)
+            {
+                for (int j = 0; j < cols; j++)
+                {
+                    matrix.SetElement(i, j, r.Next(100));
+                }
+            }
+            return matrix;
+        }
         #endregion
     }
 }

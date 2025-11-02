@@ -6,6 +6,8 @@
  * Fourth Task – calculates the average value. All this tasks should print the values to console.
  */
 using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace MultiThreading.Task2.Chaining
 {
@@ -21,9 +23,86 @@ namespace MultiThreading.Task2.Chaining
             Console.WriteLine("Fourth Task – calculates the average value. All this tasks should print the values to console");
             Console.WriteLine();
 
-            // feel free to add your code
+            Create().ContinueWith((t) => Multiply(t.Result)).Unwrap()
+                .ContinueWith((t) => Sort(t.Result)).Unwrap()
+                .ContinueWith((t) => Average(t.Result)).Unwrap()
+                .ContinueWith((t) => Console.WriteLine("Done"));
 
             Console.ReadLine();
+        }
+
+        static Task<int[]> Create()
+        {
+            return Task.Run(() =>
+            {
+                var result = new int[10];
+
+                for (var i = 0; i < result.Length; i++)
+                {
+                    result[i] = new Random().Next(1, 100);
+                }
+
+                PrintTaskResult(nameof(Create), ArrayToString(result));
+
+                return result;
+            });
+        }
+
+        static Task<int[]> Multiply(int[] input)
+        {
+            return Task.Run(() =>
+            {
+                var result = new int[input.Length];
+                var multipliers = new int[input.Length];
+                var random = new Random();
+
+                for (var i = 0; i < result.Length; i++)
+                {
+                    var multiplier = random.Next(1, 100);
+
+                    result[i] = input[i] * multiplier;
+                    multipliers[i] = multiplier;
+                }
+
+
+                PrintTaskResult(nameof(Multiply), ArrayToString(result), $"Multipliers: {ArrayToString(multipliers)}");
+
+                return result;
+            });
+        }
+
+        static Task<int[]> Sort(int[] input)
+        {
+            return Task.Run(() =>
+            {
+                var result = input.OrderByDescending(x => x).ToArray();
+
+                PrintTaskResult(nameof(Sort), ArrayToString(result));
+
+                return result;
+            });
+        }
+
+        static Task<double> Average(int[] input)
+        {
+            return Task.Run(() =>
+            {
+                var result = input.Average();
+
+                PrintTaskResult(nameof(Average), result.ToString());
+
+                return result;
+            });
+        }
+
+        static void PrintTaskResult(string taskName, string result, string additionalText = "")
+        {
+            Console.WriteLine($"'{taskName}' task result: {result}. {additionalText ?? ""}");
+        }
+
+        static string ArrayToString(int[] array)
+        {
+            return "[" + string.Join(", ", array) + "]";
         }
     }
 }
